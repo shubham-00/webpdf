@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', function () {
 	// DOM Elements
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
@@ -14,17 +14,23 @@ document.addEventListener('DOMContentLoaded', async function () {
 	let facingMode = 'environment';
 	let capturedImages = [];
 	let isDetecting = false;
-	let detectedCorners = [];
 
-	// Initially disable capture button
+	// Initially disable buttons
 	captureBtn.disabled = true;
+	clearBtn.disabled = true;
+	exportBtn.disabled = true;
 
 	// Initialize the app
-	await initCamera();
+	initCamera();
 
 	// Initialize the camera
 	async function initCamera() {
 		try {
+			// Stop any existing stream
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
+
 			const constraints = {
 				video: {
 					facingMode: facingMode,
@@ -32,20 +38,33 @@ document.addEventListener('DOMContentLoaded', async function () {
 					height: { ideal: 1080 },
 				},
 			};
+
+			// Get the media stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
-			cameraElement.oncanplay = function () {
-				if (stream.getVideoTracks().length > 0) {
-					const settings = stream.getVideoTracks()[0].getSettings();
-					captureCanvas.width = settings.width;
-					captureCanvas.height = settings.height;
-					captureBtn.disabled = false;
-				}
-				startDetection();
-			};
+
+			// Wait for the video metadata to load (ensures dimensions are available)
+			await new Promise((resolve) => {
+				cameraElement.onloadedmetadata = () => {
+					cameraElement.play(); // Ensure playback starts
+					resolve();
+				};
+			});
+
+			// Verify the stream has video tracks and set canvas dimensions
+			const videoTracks = stream.getVideoTracks();
+			if (videoTracks.length > 0) {
+				const settings = videoTracks[0].getSettings();
+				captureCanvas.width = settings.width || cameraElement.videoWidth;
+				captureCanvas.height = settings.height || cameraElement.videoHeight;
+				captureBtn.disabled = false; // Enable capture button only when ready
+				startDetection(); // Start detection after everything is set
+			} else {
+				throw new Error('No video tracks available in the stream.');
+			}
 		} catch (error) {
-			console.error('Error accessing camera:', error);
-			alert('Could not access the camera. Please check your permissions and try again.');
+			console.error('Camera initialization error:', error);
+			alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
 		}
 	}
 
@@ -53,7 +72,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 	function startDetection() {
 		isDetecting = true;
 		const detectFrame = () => {
-			if (!isDetecting) return;
+			if (!isDetecting || !stream || !cameraElement.videoWidth) {
+				return; // Exit if not detecting or video isn't ready
+			}
 
 			const context = captureCanvas.getContext('2d');
 			context.drawImage(cameraElement, 0, 0, captureCanvas.width, captureCanvas.height);
@@ -81,14 +102,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 			if (largestContour) {
 				const color = new cv.Scalar(0, 255, 0);
 				cv.drawContours(captureCanvas, contours, contours.indexOf(largestContour), color, 2);
-
-				detectedCorners = [];
-				const approx = new cv.Mat();
-				const epsilon = 0.02 * cv.arcLength(largestContour, true);
-				cv.approxPolyDP(largestContour, approx, epsilon, true);
-				for (let i = 0; i < approx.rows; i++) {
-					detectedCorners.push(new cv.Point(approx.data32S[i * 2], approx.data32S[i * 2 + 1]));
-				}
 			}
 
 			src.delete();
@@ -97,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 			hierarchy.delete();
 			requestAnimationFrame(detectFrame);
 		};
-		detectFrame();
+		requestAnimationFrame(detectFrame);
 	}
 
 	// Stop detection
@@ -107,9 +120,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 	// Flip camera (switch between front and back)
 	flipCameraBtn.addEventListener('click', () => {
-		if (stream) {
-			stream.getTracks().forEach((track) => track.stop());
-		}
+		stopDetection();
 		facingMode = facingMode === 'environment' ? 'user' : 'environment';
 		initCamera();
 	});
@@ -118,17 +129,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 	captureBtn.addEventListener('click', async () => {
 		stopDetection();
 
-		if (stream.getVideoTracks().length === 0) {
-			console.error('No video track available');
+		if (!stream || stream.getVideoTracks().length === 0) {
+			console.error('No active video stream.');
+			alert('No camera feed available. Please try restarting the camera.');
+			startDetection();
 			return;
 		}
 
 		const settings = stream.getVideoTracks()[0].getSettings();
-		const width = settings.width;
-		const height = settings.height;
+		const width = settings.width || cameraElement.videoWidth;
+		const height = settings.height || cameraElement.videoHeight;
 
-		if (width === 0 || height === 0) {
-			console.error('Video dimensions not available');
+		if (!width || !height) {
+			console.error('Video dimensions not available.');
+			alert('Unable to capture due to missing video dimensions.');
+			startDetection();
 			return;
 		}
 
@@ -204,10 +219,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 				capturedImages.push(croppedImageData);
 				updateGallery();
 
-				if (capturedImages.length > 0) {
-					clearBtn.disabled = false;
-					exportBtn.disabled = false;
-				}
+				clearBtn.disabled = false;
+				exportBtn.disabled = false;
 			}
 			approx.delete();
 		}
