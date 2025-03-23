@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	const galleryElement = document.getElementById('gallery');
 	const clearBtn = document.getElementById('clearBtn');
 	const exportBtn = document.getElementById('exportBtn');
-	const turnOnFlashlightBtn = document.getElementById('turnOnFlashlightBtn');
-	const turnOffFlashlightBtn = document.getElementById('turnOffFlashlightBtn');
 
 	// Global variables
 	let stream = null;
@@ -24,14 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Check and request camera permissions
 	async function checkCameraPermissions() {
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: {
-					facingMode: facingMode,
-					width: { ideal: 1920 },
-					height: { ideal: 1080 },
-				},
-			});
-			// stream.getTracks().forEach((track) => track.stop()); // Stop the stream immediately
+			// Request camera access
+			await navigator.mediaDevices.getUserMedia({ video: true });
 			return true; // Permissions granted
 		} catch (error) {
 			console.error('Camera permissions denied:', error);
@@ -79,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			const src = cv.imread(captureCanvas);
 			const dst = new cv.Mat();
 
-			// Convert to grayscale
+			// Convert to grayscale and apply processing
 			cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
 			cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
 			cv.Canny(src, src, 75, 200);
@@ -132,42 +124,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	flipCameraBtn.addEventListener('click', () => {
 		facingMode = facingMode === 'environment' ? 'user' : 'environment';
 		initCamera();
-	});
-
-	// Turn on flashlight
-	turnOnFlashlightBtn.addEventListener('click', () => {
-		if (!stream) return;
-
-		const videoTrack = stream.getVideoTracks()[0];
-		const capabilities = videoTrack.getCapabilities();
-
-		if (capabilities.torch) {
-			videoTrack
-				.applyConstraints({
-					advanced: [{ torch: true }],
-				})
-				.catch((e) => console.error('Error applying torch constraints:', e));
-
-			turnOnFlashlightBtn.disabled = true;
-			turnOffFlashlightBtn.disabled = false;
-		} else {
-			alert('Flashlight is not supported on this device.');
-		}
-	});
-
-	// Turn off flashlight
-	turnOffFlashlightBtn.addEventListener('click', () => {
-		if (!stream) return;
-
-		const videoTrack = stream.getVideoTracks()[0];
-		videoTrack
-			.applyConstraints({
-				advanced: [{ torch: false }],
-			})
-			.catch((e) => console.error('Error applying torch constraints:', e));
-
-		turnOnFlashlightBtn.disabled = false;
-		turnOffFlashlightBtn.disabled = true;
 	});
 
 	// Capture image
