@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const galleryElement = document.getElementById('gallery');
 	const clearBtn = document.getElementById('clearBtn');
 	const exportBtn = document.getElementById('exportBtn');
+	const cameraFlash = document.getElementById('cameraFlash');
 
 	// Global variables
 	let stream = null;
@@ -49,6 +50,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Capture image
 	captureBtn.addEventListener('click', () => {
+		// Flash effect
+		cameraFlash.classList.add('flash-animation');
+
+		// Remove animation class after animation completes
+		setTimeout(() => {
+			cameraFlash.classList.remove('flash-animation');
+		}, 500);
+
 		// Set canvas dimensions to match current video dimensions
 		const width = cameraElement.videoWidth;
 		const height = cameraElement.videoHeight;
