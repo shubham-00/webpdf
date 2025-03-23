@@ -146,27 +146,25 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	// Capture image
-	captureBtn.addEventListener('click', async () => {
-		stopDetection();
+	captureBtn.addEventListener('click', () => {
+		// Get the document frame element
+		const documentFrame = document.querySelector('.document-frame');
 
-		if (!stream || stream.getVideoTracks().length === 0) {
-			console.error('No active video stream.');
-			alert('No camera feed available. Please try restarting the camera.');
-			startDetection();
-			return;
-		}
+		// Flash effect
+		cameraFlash.classList.add('flash-animation');
 
-		const settings = stream.getVideoTracks()[0].getSettings();
-		const width = settings.width || cameraElement.videoWidth;
-		const height = settings.height || cameraElement.videoHeight;
+		// Change border to green
+		documentFrame.classList.add('captured');
 
-		if (!width || !height) {
-			console.error('Video dimensions not available.');
-			alert('Unable to capture due to missing video dimensions.');
-			startDetection();
-			return;
-		}
+		// Remove animation class and green border after 1 second
+		setTimeout(() => {
+			cameraFlash.classList.remove('flash-animation');
+			documentFrame.classList.remove('captured');
+		}, 1000);
 
+		// Set canvas dimensions to match current video dimensions
+		const width = cameraElement.videoWidth;
+		const height = cameraElement.videoHeight;
 		captureCanvas.width = width;
 		captureCanvas.height = height;
 
