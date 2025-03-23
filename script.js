@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const captureCanvas = document.getElementById('captureCanvas');
 	const captureBtn = document.getElementById('captureBtn');
 	const flipCameraBtn = document.getElementById('flipCameraBtn');
+	const flashlightToggleBtn = document.getElementById('flashlightToggleBtn');
 	const galleryElement = document.getElementById('gallery');
 	const clearBtn = document.getElementById('clearBtn');
 	const exportBtn = document.getElementById('exportBtn');
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	let stream = null;
 	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
+	let isFlashlightOn = false; // Track flashlight state
 
 	// Initialize the app
 	initCamera();
@@ -41,6 +43,25 @@ document.addEventListener('DOMContentLoaded', function () {
 			alert("Could not access the camera. Please make sure it's connected and permissions are granted.");
 		}
 	}
+
+	// Toggle flashlight
+	flashlightToggleBtn.addEventListener('click', () => {
+		if (!stream) return;
+
+		const videoTrack = stream.getVideoTracks()[0];
+		const capabilities = videoTrack.getCapabilities();
+
+		if (capabilities.torch) {
+			isFlashlightOn = !isFlashlightOn;
+			videoTrack
+				.applyConstraints({
+					advanced: [{ torch: isFlashlightOn }],
+				})
+				.catch((e) => console.error('Error applying torch constraints:', e));
+		} else {
+			alert('Flashlight is not supported on this device.');
+		}
+	});
 
 	// Flip camera (switch between front and back)
 	flipCameraBtn.addEventListener('click', () => {
