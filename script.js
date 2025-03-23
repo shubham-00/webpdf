@@ -53,16 +53,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Get the document frame element
 		const documentFrame = document.querySelector('.document-frame');
 
-		// Flash effect
-		cameraFlash.classList.add('flash-animation');
-
 		// Change border to green
-		documentFrame.classList.add('captured');
+		documentFrame.style.borderColor = 'rgba(40, 167, 69, 0.9)';
+		documentFrame.style.borderStyle = 'solid';
+		documentFrame.style.borderWidth = '3px';
 
-		// Remove animation class and green border after 1 second
+		// Revert border color back to white after 1 second
 		setTimeout(() => {
-			cameraFlash.classList.remove('flash-animation');
-			documentFrame.classList.remove('captured');
+			documentFrame.style.borderColor = 'rgba(255, 255, 255, 0.7)';
+			documentFrame.style.borderStyle = 'dashed';
+			documentFrame.style.borderWidth = '2px';
 		}, 1000);
 
 		// Set canvas dimensions to match current video dimensions
