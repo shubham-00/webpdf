@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	let isDetecting = false;
 
 	// Initially disable buttons
-	captureBtn.disabled = false;
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
 
