@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// DOM Elements
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
-	const adjustCanvas = document.getElementById('adjustCanvas');
+	const adjustCanvas = document.getElementById('adjustCanvas'); // New canvas for adjustments
 	const captureBtn = document.getElementById('captureBtn');
 	const flipCameraBtn = document.getElementById('flipCameraBtn');
 	const galleryElement = document.getElementById('gallery');
@@ -11,9 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Global variables
 	let stream = null;
-	let facingMode = 'environment';
+	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
-	let isDetecting = false;
+	let isDetecting = false; // Flag to control detection
 
 	// Initially disable buttons
 	clearBtn.disabled = true;
@@ -236,9 +236,11 @@ document.addEventListener('DOMContentLoaded', function () {
 				cv.imshow(captureCanvas, dst);
 				const croppedImageData = captureCanvas.toDataURL('image/jpeg', 0.8);
 
+				// Add the captured image to the array
 				capturedImages.push(croppedImageData);
 				updateGallery();
 
+				// Enable buttons if needed
 				clearBtn.disabled = false;
 				exportBtn.disabled = false;
 			}
