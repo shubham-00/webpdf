@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
 	// DOM Elements
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	captureBtn.disabled = true;
 
 	// Initialize the app
-	initCamera();
+	await initCamera();
 
 	// Initialize the camera
 	async function initCamera() {
