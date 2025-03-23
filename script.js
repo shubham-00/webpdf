@@ -88,7 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 				// Store detected corners for adjustment
 				detectedCorners = [];
-				for (let i = 0; i < 4; i++) {
+				const approx = new cv.Mat();
+				const epsilon = 0.02 * cv.arcLength(largestContour, true);
+				cv.approxPolyDP(largestContour, approx, epsilon, true);
+				for (let i = 0; i < approx.rows; i++) {
 					detectedCorners.push(new cv.Point(approx.data32S[i * 2], approx.data32S[i * 2 + 1]));
 				}
 			}
