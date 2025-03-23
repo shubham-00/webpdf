@@ -52,9 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			};
 
 			// Stop any existing stream
-			if (stream) {
-				stream.getTracks().forEach((track) => track.stop());
-			}
+			// if (stream) {
+			// 	stream.getTracks().forEach((track) => track.stop());
+			// }
 
 			// Get the media stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
