@@ -32,12 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				},
 			};
 
-			// Stop any existing stream
-			if (stream) {
-				stream.getTracks().forEach((track) => track.stop());
-			}
-
-			// Get new stream
+			// Request camera access
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
 
@@ -45,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			startDetection();
 		} catch (error) {
 			console.error('Error accessing camera:', error);
-			alert("Could not access the camera. Please make sure it's connected and permissions are granted.");
+			alert('Could not access the camera. Please check your permissions and try again.');
 		}
 	}
 
