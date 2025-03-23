@@ -39,8 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Start detecting document outlines
 			startDetection();
 		} catch (error) {
-			console.error('Error accessing camera:', error);
+			// console.error('Error accessing camera:', error);
 			alert('Could not access the camera. Please check your permissions and try again.');
+			alert(error);
 		}
 	}
 
