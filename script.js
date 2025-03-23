@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			startDetection();
 		} catch (error) {
 			// console.error('Error accessing camera:', error);
-			alert('Could not access the camera. Please check your permissions and try again.');
+			// alert('Could not access the camera. Please check your permissions and try again.');
 			alert(error);
 		}
 	}
