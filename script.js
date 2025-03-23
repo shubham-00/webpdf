@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// DOM Elements
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
+	const adjustCanvas = document.getElementById('adjustCanvas'); // New canvas for adjustments
 	const captureBtn = document.getElementById('captureBtn');
 	const flipCameraBtn = document.getElementById('flipCameraBtn');
 	const galleryElement = document.getElementById('gallery');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
 	let isDetecting = false; // Flag to control detection
+	let detectedCorners = []; // Store detected corners for adjustment
 
 	// Initialize the app
 	initCamera();
@@ -83,6 +85,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (largestContour) {
 				const color = new cv.Scalar(0, 255, 0); // Green color for the outline
 				cv.drawContours(captureCanvas, contours, contours.indexOf(largestContour), color, 2);
+
+				// Store detected corners for adjustment
+				detectedCorners = [];
+				for (let i = 0; i < 4; i++) {
+					detectedCorners.push(new cv.Point(approx.data32S[i * 2], approx.data32S[i * 2 + 1]));
+				}
 			}
 
 			// Clean up
