@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-	// DOM Elements
+	// DOM Elements.
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
 	const adjustCanvas = document.getElementById('adjustCanvas'); // New canvas for adjustments
