@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	let stream = null;
 	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
+	let isDetecting = false; // Flag to control detection
 
 	// Initialize the app
 	initCamera();
@@ -37,10 +38,64 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Get new stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
+
+			// Start detecting document outlines
+			startDetection();
 		} catch (error) {
 			console.error('Error accessing camera:', error);
 			alert("Could not access the camera. Please make sure it's connected and permissions are granted.");
 		}
+	}
+
+	// Start detecting document outlines
+	function startDetection() {
+		isDetecting = true;
+		const detectFrame = () => {
+			if (!isDetecting) return;
+
+			const context = captureCanvas.getContext('2d');
+			context.drawImage(cameraElement, 0, 0, captureCanvas.width, captureCanvas.height);
+			const src = cv.imread(captureCanvas);
+			const dst = new cv.Mat();
+
+			// Convert to grayscale
+			cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
+			cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
+			cv.Canny(src, src, 75, 200);
+
+			// Find contours
+			const contours = new cv.MatVector();
+			const hierarchy = new cv.Mat();
+			cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+			// Find the largest contour
+			let maxArea = 0;
+			let largestContour = null;
+			for (let i = 0; i < contours.size(); i++) {
+				const area = cv.contourArea(contours.get(i));
+				if (area > maxArea) {
+					maxArea = area;
+					largestContour = contours.get(i);
+				}
+			}
+
+			// Draw the detected outline
+			if (largestContour) {
+				const color = new cv.Scalar(0, 255, 0); // Green color for the outline
+				cv.drawContours(captureCanvas, contours, contours.indexOf(largestContour), color, 2);
+			}
+
+			// Clean up
+			src.delete();
+			dst.delete();
+			requestAnimationFrame(detectFrame);
+		};
+		detectFrame();
+	}
+
+	// Stop detection
+	function stopDetection() {
+		isDetecting = false;
 	}
 
 	// Flip camera (switch between front and back)
@@ -87,6 +142,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Capture image
 	captureBtn.addEventListener('click', async () => {
+		// Stop detection before capturing
+		stopDetection();
+
 		// Set canvas dimensions to match current video dimensions
 		const width = cameraElement.videoWidth;
 		const height = cameraElement.videoHeight;
@@ -96,9 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Draw the current video frame on the canvas
 		const context = captureCanvas.getContext('2d');
 		context.drawImage(cameraElement, 0, 0, width, height);
-
-		// Get the image data as a base64 string
-		const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
 
 		// Load the image into OpenCV
 		const src = cv.imread(captureCanvas);
