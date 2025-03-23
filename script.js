@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	let isDetecting = false;
 
 	// Initially disable buttons
-	captureBtn.disabled = true;
+	captureBtn.disabled = false;
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
 
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		try {
 			// Stop any existing stream
 			if (stream) {
-				stream.getTracks().forEach((track) => track.stop());
+				await stream.getTracks().forEach(async (track) => await track.stop());
 			}
 
 			const constraints = {
@@ -45,20 +45,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			// Wait for the video metadata to load (ensures dimensions are available)
 			await new Promise((resolve) => {
-				cameraElement.onloadedmetadata = () => {
-					cameraElement.play(); // Ensure playback starts
-					resolve();
+				cameraElement.onloadedmetadata = async () => {
+					await cameraElement.play(); // Ensure playback starts
+					await resolve();
 				};
 			});
 
 			// Verify the stream has video tracks and set canvas dimensions
-			const videoTracks = stream.getVideoTracks();
+			const videoTracks = await stream.getVideoTracks();
 			if (videoTracks.length > 0) {
-				const settings = videoTracks[0].getSettings();
+				const settings = await videoTracks[0].getSettings();
 				captureCanvas.width = settings.width || cameraElement.videoWidth;
 				captureCanvas.height = settings.height || cameraElement.videoHeight;
 				captureBtn.disabled = false; // Enable capture button only when ready
-				startDetection(); // Start detection after everything is set
+				await startDetection(); // Start detection after everything is set
 			} else {
 				throw new Error('No video tracks available in the stream.');
 			}
