@@ -86,22 +86,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	// Capture image
-	captureBtn.addEventListener('click', () => {
-		// Get the document frame element
-		const documentFrame = document.querySelector('.document-frame');
-
-		// Change border to green
-		documentFrame.style.borderColor = 'rgba(40, 167, 69, 0.9)';
-		documentFrame.style.borderStyle = 'solid';
-		documentFrame.style.borderWidth = '3px';
-
-		// Revert border color back to white after 1 second
-		setTimeout(() => {
-			documentFrame.style.borderColor = 'rgba(255, 255, 255, 0.7)';
-			documentFrame.style.borderStyle = 'dashed';
-			documentFrame.style.borderWidth = '2px';
-		}, 1000);
-
+	captureBtn.addEventListener('click', async () => {
 		// Set canvas dimensions to match current video dimensions
 		const width = cameraElement.videoWidth;
 		const height = cameraElement.videoHeight;
@@ -115,17 +100,100 @@ document.addEventListener('DOMContentLoaded', function () {
 		// Get the image data as a base64 string
 		const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
 
-		// Add to captured images array
-		capturedImages.push(imageData);
+		// Load the image into OpenCV
+		const src = cv.imread(captureCanvas);
+		const dst = new cv.Mat();
 
-		// Update gallery
-		updateGallery();
+		// Convert to grayscale
+		cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
 
-		// Enable buttons if needed
-		if (capturedImages.length > 0) {
-			clearBtn.disabled = false;
-			exportBtn.disabled = false;
+		// Apply Gaussian blur
+		cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
+
+		// Edge detection
+		cv.Canny(src, src, 75, 200);
+
+		// Find contours
+		const contours = new cv.MatVector();
+		const hierarchy = new cv.Mat();
+		cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+		// Find the largest contour
+		let maxArea = 0;
+		let largestContour = null;
+		for (let i = 0; i < contours.size(); i++) {
+			const area = cv.contourArea(contours.get(i));
+			if (area > maxArea) {
+				maxArea = area;
+				largestContour = contours.get(i);
+			}
 		}
+
+		// Approximate the contour to a polygon
+		const epsilon = 0.02 * cv.arcLength(largestContour, true);
+		const approx = new cv.Mat();
+		cv.approxPolyDP(largestContour, approx, epsilon, true);
+
+		// If we found a quadrilateral, crop the image
+		if (approx.rows === 4) {
+			const points = [];
+			for (let i = 0; i < 4; i++) {
+				points.push(new cv.Point(approx.data32S[i * 2], approx.data32S[i * 2 + 1]));
+			}
+
+			// Get the bounding box of the document
+			const rect = cv.boundingRect(approx);
+			const dstSize = new cv.Size(rect.width, rect.height);
+			const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+				points[0].x,
+				points[0].y,
+				points[1].x,
+				points[1].y,
+				points[2].x,
+				points[2].y,
+				points[3].x,
+				points[3].y,
+			]);
+
+			// Perform perspective transformation
+			const M = cv.getPerspectiveTransform(
+				dstPoints,
+				cv.matFromArray(4, 1, cv.CV_32FC2, [
+					0,
+					0,
+					dstSize.width,
+					0,
+					dstSize.width,
+					dstSize.height,
+					0,
+					dstSize.height,
+				]),
+			);
+			cv.warpPerspective(src, dst, M, dstSize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+			// Convert the cropped image to base64
+			cv.imshow(captureCanvas, dst);
+			const croppedImageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+
+			// Add to captured images array
+			capturedImages.push(croppedImageData);
+
+			// Update gallery
+			updateGallery();
+
+			// Enable buttons if needed
+			if (capturedImages.length > 0) {
+				clearBtn.disabled = false;
+				exportBtn.disabled = false;
+			}
+		}
+
+		// Clean up
+		src.delete();
+		dst.delete();
+		contours.delete();
+		hierarchy.delete();
+		approx.delete();
 	});
 
 	// Update gallery with captured images
