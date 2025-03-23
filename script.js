@@ -21,8 +21,26 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Initialize the app
 	initCamera();
 
+	// Check and request camera permissions
+	async function checkCameraPermissions() {
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+			stream.getTracks().forEach((track) => track.stop()); // Stop the stream immediately
+			return true; // Permissions granted
+		} catch (error) {
+			console.error('Camera permissions denied:', error);
+			return false; // Permissions denied
+		}
+	}
+
 	// Initialize the camera
 	async function initCamera() {
+		const hasPermission = await checkCameraPermissions();
+		if (!hasPermission) {
+			alert('Could not access the camera. Please check your permissions and try again.');
+			return;
+		}
+
 		try {
 			const constraints = {
 				video: {
