@@ -23,14 +23,27 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Initialize the app
 	initCamera();
 
+	// Check and request camera permissions
+	async function checkCameraPermissions() {
+		try {
+			// Request camera access
+			await navigator.mediaDevices.getUserMedia({ video: true });
+			return true; // Permissions granted
+		} catch (error) {
+			console.error('Camera permissions denied:', error);
+			return false; // Permissions denied
+		}
+	}
+
 	// Initialize the camera
 	async function initCamera() {
-		try {
-			// Stop any existing stream
-			if (stream) {
-				await stream.getTracks().forEach(async (track) => await track.stop());
-			}
+		const hasPermission = await checkCameraPermissions();
+		if (!hasPermission) {
+			alert('Could not access the camera. Please check your permissions and try again.');
+			return;
+		}
 
+		try {
 			const constraints = {
 				video: {
 					facingMode: facingMode,
@@ -39,26 +52,31 @@ document.addEventListener('DOMContentLoaded', function () {
 				},
 			};
 
+			// Stop any existing stream
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
+
 			// Get the media stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
 
 			// Wait for the video metadata to load (ensures dimensions are available)
 			await new Promise((resolve) => {
-				cameraElement.onloadedmetadata = async () => {
-					await cameraElement.play(); // Ensure playback starts
-					await resolve();
+				cameraElement.onloadedmetadata = () => {
+					cameraElement.play(); // Ensure playback starts
+					resolve();
 				};
 			});
 
-			// Verify the stream has video tracks and set canvas dimensions
-			const videoTracks = await stream.getVideoTracks();
+			// Set canvas dimensions
+			const videoTracks = stream.getVideoTracks();
 			if (videoTracks.length > 0) {
-				const settings = await videoTracks[0].getSettings();
+				const settings = videoTracks[0].getSettings();
 				captureCanvas.width = settings.width || cameraElement.videoWidth;
 				captureCanvas.height = settings.height || cameraElement.videoHeight;
 				captureBtn.disabled = false; // Enable capture button only when ready
-				await startDetection(); // Start detection after everything is set
+				startDetection(); // Start detection after everything is set
 			} else {
 				throw new Error('No video tracks available in the stream.');
 			}
@@ -81,14 +99,17 @@ document.addEventListener('DOMContentLoaded', function () {
 			const src = cv.imread(captureCanvas);
 			const dst = new cv.Mat();
 
+			// Convert to grayscale and apply processing
 			cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
 			cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
 			cv.Canny(src, src, 75, 200);
 
+			// Find contours
 			const contours = new cv.MatVector();
 			const hierarchy = new cv.Mat();
 			cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
+			// Find the largest contour
 			let maxArea = 0;
 			let largestContour = null;
 			for (let i = 0; i < contours.size(); i++) {
@@ -99,18 +120,18 @@ document.addEventListener('DOMContentLoaded', function () {
 				}
 			}
 
+			// Draw the detected outline
 			if (largestContour) {
-				const color = new cv.Scalar(0, 255, 0);
+				const color = new cv.Scalar(0, 255, 0); // Green color for the outline
 				cv.drawContours(captureCanvas, contours, contours.indexOf(largestContour), color, 2);
 			}
 
+			// Clean up
 			src.delete();
 			dst.delete();
-			contours.delete();
-			hierarchy.delete();
 			requestAnimationFrame(detectFrame);
 		};
-		requestAnimationFrame(detectFrame);
+		detectFrame();
 	}
 
 	// Stop detection
