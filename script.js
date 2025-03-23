@@ -4,17 +4,16 @@ document.addEventListener('DOMContentLoaded', function () {
 	const captureCanvas = document.getElementById('captureCanvas');
 	const captureBtn = document.getElementById('captureBtn');
 	const flipCameraBtn = document.getElementById('flipCameraBtn');
-	const flashlightToggleBtn = document.getElementById('flashlightToggleBtn');
 	const galleryElement = document.getElementById('gallery');
 	const clearBtn = document.getElementById('clearBtn');
 	const exportBtn = document.getElementById('exportBtn');
-	const cameraFlash = document.getElementById('cameraFlash');
+	const turnOnFlashlightBtn = document.getElementById('turnOnFlashlightBtn');
+	const turnOffFlashlightBtn = document.getElementById('turnOffFlashlightBtn');
 
 	// Global variables
 	let stream = null;
 	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
-	let isFlashlightOn = false; // Track flashlight state
 
 	// Initialize the app
 	initCamera();
@@ -44,35 +43,46 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
-	// Toggle flashlight
-	flashlightToggleBtn.addEventListener('click', () => {
+	// Flip camera (switch between front and back)
+	flipCameraBtn.addEventListener('click', () => {
+		facingMode = facingMode === 'environment' ? 'user' : 'environment';
+		initCamera();
+	});
+
+	// Turn on flashlight
+	turnOnFlashlightBtn.addEventListener('click', () => {
 		if (!stream) return;
 
 		const videoTrack = stream.getVideoTracks()[0];
 		const capabilities = videoTrack.getCapabilities();
 
 		if (capabilities.torch) {
-			isFlashlightOn = !isFlashlightOn;
 			videoTrack
 				.applyConstraints({
-					advanced: [{ torch: isFlashlightOn }],
+					advanced: [{ torch: true }],
 				})
 				.catch((e) => console.error('Error applying torch constraints:', e));
 
-			// Update button text
-			flashlightToggleBtn.textContent = `Flashlight: ${isFlashlightOn ? 'ON' : 'OFF'}`;
+			turnOnFlashlightBtn.disabled = true;
+			turnOffFlashlightBtn.disabled = false;
 		} else {
 			alert('Flashlight is not supported on this device.');
 		}
 	});
 
-	// Set initial flashlight button text
-	flashlightToggleBtn.textContent = 'Flashlight: OFF';
+	// Turn off flashlight
+	turnOffFlashlightBtn.addEventListener('click', () => {
+		if (!stream) return;
 
-	// Flip camera (switch between front and back)
-	flipCameraBtn.addEventListener('click', () => {
-		facingMode = facingMode === 'environment' ? 'user' : 'environment';
-		initCamera();
+		const videoTrack = stream.getVideoTracks()[0];
+		videoTrack
+			.applyConstraints({
+				advanced: [{ torch: false }],
+			})
+			.catch((e) => console.error('Error applying torch constraints:', e));
+
+		turnOnFlashlightBtn.disabled = false;
+		turnOffFlashlightBtn.disabled = true;
 	});
 
 	// Capture image
