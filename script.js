@@ -50,13 +50,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Capture image
 	captureBtn.addEventListener('click', () => {
+		// Get the document frame element
+		const documentFrame = document.querySelector('.document-frame');
+
 		// Flash effect
 		cameraFlash.classList.add('flash-animation');
 
-		// Remove animation class after animation completes
+		// Change border to green
+		documentFrame.classList.add('captured');
+
+		// Remove animation class and green border after 1 second
 		setTimeout(() => {
 			cameraFlash.classList.remove('flash-animation');
-		}, 500);
+			documentFrame.classList.remove('captured');
+		}, 1000);
 
 		// Set canvas dimensions to match current video dimensions
 		const width = cameraElement.videoWidth;
@@ -70,24 +77,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		// Get the image data as a base64 string
 		const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
-
-		// Create freeze frame effect
-		const freezeFrameImg = document.createElement('img');
-		freezeFrameImg.src = imageData;
-		freezeFrameImg.className = 'freeze-frame';
-
-		// Hide the video temporarily
-		cameraElement.style.display = 'none';
-
-		// Add the freeze frame to the camera container
-		const cameraContainer = cameraElement.parentElement;
-		cameraContainer.appendChild(freezeFrameImg);
-
-		// After 1 second, remove the freeze frame and show the video again
-		setTimeout(() => {
-			freezeFrameImg.remove();
-			cameraElement.style.display = 'block';
-		}, 1000);
 
 		// Add to captured images array
 		capturedImages.push(imageData);

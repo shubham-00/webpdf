@@ -33,6 +33,12 @@ body {
 	border-radius: 8px;
 }
 
+.document-frame.captured {
+	border-color: rgba(40, 167, 69, 0.9);
+	border-width: 3px;
+	border-style: solid;
+}
+
 .capture-btn {
 	width: 64px;
 	height: 64px;
