@@ -20,25 +20,19 @@ document.addEventListener('DOMContentLoaded', function () {
 	initCamera();
 
 	// Check and request camera permissions
-	async function checkCameraPermissions() {
-		try {
-			// Request camera access
-			await navigator.mediaDevices.getUserMedia({ video: true });
-			return true; // Permissions granted
-		} catch (error) {
-			console.error('Camera permissions denied:', error);
-			return false; // Permissions denied
-		}
-	}
+	// async function checkCameraPermissions() {
+	// 	try {
+	// 		// Request camera access
+	// 		await navigator.mediaDevices.getUserMedia({ video: true });
+	// 		return true; // Permissions granted
+	// 	} catch (error) {
+	// 		console.error('Camera permissions denied:', error);
+	// 		return false; // Permissions denied
+	// 	}
+	// }
 
 	// Initialize the camera
 	async function initCamera() {
-		const hasPermission = await checkCameraPermissions();
-		if (!hasPermission) {
-			alert('Could not access the camera. Please check your permissions and try again.');
-			return;
-		}
-
 		try {
 			const constraints = {
 				video: {
@@ -47,12 +41,11 @@ document.addEventListener('DOMContentLoaded', function () {
 					height: { ideal: 1080 },
 				},
 			};
-
-			// Request camera access
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
-
-			// Start detecting document outlines
+			cameraElement.oncanplay = function () {
+				captureBtn.disabled = false;
+			};
 			startDetection();
 		} catch (error) {
 			console.error('Error accessing camera:', error);
