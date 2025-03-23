@@ -58,10 +58,16 @@ document.addEventListener('DOMContentLoaded', function () {
 					advanced: [{ torch: isFlashlightOn }],
 				})
 				.catch((e) => console.error('Error applying torch constraints:', e));
+
+			// Update button text
+			flashlightToggleBtn.textContent = `Flashlight: ${isFlashlightOn ? 'ON' : 'OFF'}`;
 		} else {
 			alert('Flashlight is not supported on this device.');
 		}
 	});
+
+	// Set initial flashlight button text
+	flashlightToggleBtn.textContent = 'Flashlight: OFF';
 
 	// Flip camera (switch between front and back)
 	flipCameraBtn.addEventListener('click', () => {
