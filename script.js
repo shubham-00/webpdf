@@ -19,9 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
 
-	// Initialize the app
-	initCamera();
-
 	// Check and request camera permissions
 	async function checkCameraPermissions() {
 		try {
@@ -52,9 +49,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			};
 
 			// Stop any existing stream
-			// if (stream) {
-			// 	stream.getTracks().forEach((track) => track.stop());
-			// }
+			if (stream) {
+				stream.getTracks().forEach((track) => track.stop());
+			}
 
 			// Get the media stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -111,18 +108,27 @@ document.addEventListener('DOMContentLoaded', function () {
 			// Find the largest contour
 			let maxArea = 0;
 			let largestContour = null;
+			let largestContourIndex = -1;
 			for (let i = 0; i < contours.size(); i++) {
 				const area = cv.contourArea(contours.get(i));
 				if (area > maxArea) {
 					maxArea = area;
 					largestContour = contours.get(i);
+					largestContourIndex = i;
 				}
 			}
 
 			// Draw the detected outline
 			if (largestContour) {
 				const color = new cv.Scalar(0, 255, 0); // Green color for the outline
-				cv.drawContours(captureCanvas, contours, contours.indexOf(largestContour), color, 2);
+
+				// Create a Mat from the canvas
+				const canvasMat = cv.imread(captureCanvas); // Read the canvas as a Mat
+				cv.drawContours(canvasMat, contours, largestContourIndex, color, 2);
+
+				// Show the result back on the canvas
+				cv.imshow(captureCanvas, canvasMat); // Display the updated Mat on the canvas
+				canvasMat.delete(); // Clean up the Mat to prevent memory leaks
 			}
 
 			// Clean up
@@ -142,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	flipCameraBtn.addEventListener('click', () => {
 		stopDetection();
 		facingMode = facingMode === 'environment' ? 'user' : 'environment';
+
 		initCamera();
 	});
 
