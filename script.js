@@ -1,85 +1,33 @@
+let cameraElement;
+let captureCanvas;
+let captureBtn;
+let galleryElement;
+let clearBtn;
+let exportBtn;
+let cameraSelect;
+
+let stream = null;
+let capturedImages = [];
+let videoDevices = [];
+
 document.addEventListener('DOMContentLoaded', function () {
 	// DOM Elements.
-	const cameraElement = document.getElementById('camera');
-	const captureCanvas = document.getElementById('captureCanvas');
-	const captureBtn = document.getElementById('captureBtn');
-	const galleryElement = document.getElementById('gallery');
-	const clearBtn = document.getElementById('clearBtn');
-	const exportBtn = document.getElementById('exportBtn');
-	const cameraSelect = document.getElementById('cameraSelect');
+	cameraElement = document.getElementById('camera');
+	captureCanvas = document.getElementById('captureCanvas');
+	captureBtn = document.getElementById('captureBtn');
+	galleryElement = document.getElementById('gallery');
+	clearBtn = document.getElementById('clearBtn');
+	exportBtn = document.getElementById('exportBtn');
+	cameraSelect = document.getElementById('cameraSelect');
 
 	// Global variables
-	let stream = null;
-	let capturedImages = [];
-	let videoDevices = [];
+	stream = null;
+	capturedImages = [];
+	videoDevices = [];
 
 	// Initially disable buttons
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
-
-	// Check and request camera permissions
-	async function checkCameraPermissions() {
-		try {
-			await navigator.mediaDevices.getUserMedia({ video: true });
-			return true; // Permissions granted
-		} catch (error) {
-			console.error('Camera permissions denied:', error);
-			return false; // Permissions denied
-		}
-	}
-
-	// Initialize the camera
-	async function initCamera(selectedDeviceId) {
-		const hasPermission = await checkCameraPermissions();
-		if (!hasPermission) {
-			alert('Could not access the camera. Please check your permissions and try again.');
-			return;
-		}
-
-		try {
-			// Get the list of available video devices
-			videoDevices = await navigator.mediaDevices.enumerateDevices();
-			const videoInputs = videoDevices.filter((device) => device.kind === 'videoinput');
-
-			if (videoInputs.length === 0) {
-				alert('No video input devices found.');
-				return;
-			}
-
-			// Populate the camera selection dropdown
-			cameraSelect.innerHTML = '';
-			videoInputs.forEach((device) => {
-				const option = document.createElement('option');
-				option.value = device.deviceId;
-				option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
-				cameraSelect.appendChild(option);
-			});
-
-			// Set constraints for the video stream
-			const constraints = {
-				video: {
-					deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-					width: { ideal: 1280 }, // Set ideal width
-					height: { ideal: 720 }, // Set ideal height
-				},
-			};
-
-			// Get the media stream
-			stream = await navigator.mediaDevices.getUserMedia(constraints);
-			cameraElement.srcObject = stream;
-
-			// Wait for the video metadata to load
-			await new Promise((resolve) => {
-				cameraElement.onloadedmetadata = () => {
-					cameraElement.play(); // Ensure playback starts
-					resolve();
-				};
-			});
-		} catch (error) {
-			console.error('Camera initialization error:', error);
-			alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
-		}
-	}
 
 	// Capture image
 	captureBtn.addEventListener('click', () => {
@@ -99,45 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		clearBtn.disabled = false;
 		exportBtn.disabled = false;
 	});
-
-	// Update gallery with captured images
-	function updateGallery() {
-		galleryElement.innerHTML = '';
-
-		capturedImages.forEach((img, index) => {
-			const colDiv = document.createElement('div');
-			colDiv.className = 'col';
-
-			colDiv.innerHTML = `
-                <div class="card h-100">
-                    <div class="gallery-img-container">
-                        <img src="${img}" class="gallery-img">
-                        <div class="delete-btn" data-index="${index}">
-                            <i class="bi bi-trash"></i>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <small class="text-muted">Page ${index + 1}</small>
-                    </div>
-                </div>
-            `;
-
-			galleryElement.appendChild(colDiv);
-		});
-
-		document.querySelectorAll('.delete-btn').forEach((btn) => {
-			btn.addEventListener('click', function () {
-				const index = parseInt(this.getAttribute('data-index'));
-				capturedImages.splice(index, 1);
-				updateGallery();
-
-				if (capturedImages.length === 0) {
-					clearBtn.disabled = true;
-					exportBtn.disabled = true;
-				}
-			});
-		});
-	}
 
 	// Clear all captured images
 	clearBtn.addEventListener('click', () => {
@@ -233,4 +142,107 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function onCameraDropdownChange(value) {
 	initCamera(value);
+}
+
+// Check and request camera permissions
+async function checkCameraPermissions() {
+	try {
+		await navigator.mediaDevices.getUserMedia({ video: true });
+		return true; // Permissions granted
+	} catch (error) {
+		console.error('Camera permissions denied:', error);
+		return false; // Permissions denied
+	}
+}
+
+// Initialize the camera
+async function initCamera(selectedDeviceId) {
+	const hasPermission = await checkCameraPermissions();
+	if (!hasPermission) {
+		alert('Could not access the camera. Please check your permissions and try again.');
+		return;
+	}
+
+	try {
+		// Get the list of available video devices
+		videoDevices = await navigator.mediaDevices.enumerateDevices();
+		const videoInputs = videoDevices.filter((device) => device.kind === 'videoinput');
+
+		if (videoInputs.length === 0) {
+			alert('No video input devices found.');
+			return;
+		}
+
+		// Populate the camera selection dropdown
+		cameraSelect.innerHTML = '';
+		videoInputs.forEach((device) => {
+			const option = document.createElement('option');
+			option.value = device.deviceId;
+			option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
+			cameraSelect.appendChild(option);
+		});
+
+		// Set constraints for the video stream
+		const constraints = {
+			video: {
+				deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+				width: { ideal: 1280 }, // Set ideal width
+				height: { ideal: 720 }, // Set ideal height
+			},
+		};
+
+		// Get the media stream
+		stream = await navigator.mediaDevices.getUserMedia(constraints);
+		cameraElement.srcObject = stream;
+
+		// Wait for the video metadata to load
+		await new Promise((resolve) => {
+			cameraElement.onloadedmetadata = () => {
+				cameraElement.play(); // Ensure playback starts
+				resolve();
+			};
+		});
+	} catch (error) {
+		console.error('Camera initialization error:', error);
+		alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
+	}
+}
+
+// Update gallery with captured images
+function updateGallery() {
+	galleryElement.innerHTML = '';
+
+	capturedImages.forEach((img, index) => {
+		const colDiv = document.createElement('div');
+		colDiv.className = 'col';
+
+		colDiv.innerHTML = `
+                <div class="card h-100">
+                    <div class="gallery-img-container">
+                        <img src="${img}" class="gallery-img">
+                        <div class="delete-btn" data-index="${index}">
+                            <i class="bi bi-trash"></i>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">Page ${index + 1}</small>
+                    </div>
+                </div>
+            `;
+
+		galleryElement.appendChild(colDiv);
+	});
+
+	document.querySelectorAll('.delete-btn').forEach((btn) => {
+		btn.addEventListener('click', function () {
+			const index = parseInt(this.getAttribute('data-index'));
+			capturedImages.splice(index, 1);
+			updateGallery();
+
+			if (capturedImages.length === 0) {
+				clearBtn.disabled = true;
+				exportBtn.disabled = true;
+			}
+		});
+	});
 }
