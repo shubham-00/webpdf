@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// });
 
 	// Initialize the camera on page load
-	initCamera();
+	// initCamera();
 });
 
 function onCameraDropdownChange(value) {
