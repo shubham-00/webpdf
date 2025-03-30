@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
 	let isDetecting = false; // Flag to control detection
+	let currentCameraIndex = 0; // Track the currently selected camera
 
 	// Initially disable buttons
 	clearBtn.disabled = true;
@@ -163,12 +164,21 @@ document.addEventListener('DOMContentLoaded', function () {
 		isDetecting = false;
 	}
 
-	// Flip camera (switch between front and back)
-	flipCameraBtn.addEventListener('click', () => {
+	// Flip camera (switch between available cameras)
+	flipCameraBtn.addEventListener('click', async () => {
 		stopDetection();
-		facingMode = facingMode === 'environment' ? 'user' : 'environment';
 
-		initCamera();
+		// Get the list of available cameras
+		const videoDevices = await navigator.mediaDevices.enumerateDevices();
+		const availableCameras = videoDevices.filter((device) => device.kind === 'videoinput');
+
+		// Increment the index to switch to the next camera
+		currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+
+		// Get the deviceId of the selected camera
+		const selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
+
+		initCamera(selectedDeviceId); // Initialize the camera with the selected deviceId
 	});
 
 	// Capture image
