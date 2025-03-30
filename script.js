@@ -125,18 +125,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	// cameraSelect.addEventListener('change', () => {
-	// 	const selectedDeviceId = cameraSelect.value;
-	// 	initCamera(selectedDeviceId);
-	// });
-
-	// Switch camera
-	// document.getElementById('flipCameraBtn').addEventListener('click', () => {
-	// 	const selectedDeviceId = cameraSelect.value;
-	// 	initCamera(selectedDeviceId);
-	// });
-
 	// Initialize the camera on page load
+	// loop thru all the cameras and add them into the select - dropdown
 	initCamera();
 });
 
@@ -195,8 +185,8 @@ async function chooseCamera(selectedDeviceId) {
 	const constraints = {
 		video: {
 			deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-			width: { ideal: 1280 }, // Set ideal width
-			height: { ideal: 720 }, // Set ideal height
+			// width: { ideal: 1280 }, // Set ideal width
+			// height: { ideal: 720 }, // Set ideal height
 		},
 	};
 
