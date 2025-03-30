@@ -216,11 +216,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	// Switch camera
-	document.getElementById('flipCameraBtn').addEventListener('click', () => {
+	cameraSelect.addEventListener('change', () => {
 		const selectedDeviceId = cameraSelect.value;
 		initCamera(selectedDeviceId);
 	});
+
+	// Switch camera
+	// document.getElementById('flipCameraBtn').addEventListener('click', () => {
+	// 	const selectedDeviceId = cameraSelect.value;
+	// 	initCamera(selectedDeviceId);
+	// });
 
 	// Initialize the camera on page load
 	initCamera();
