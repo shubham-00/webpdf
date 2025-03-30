@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function onCameraDropdownChange(selectedDeviceId) {
+	console.log('onCameraDropdownChange', selectedDeviceId);
 	chooseCamera(selectedDeviceId);
 }
 
