@@ -17,6 +17,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
 
+	function onCameraDropdownChange(value) {
+		initCamera(value);
+	}
+
 	// Check and request camera permissions
 	async function checkCameraPermissions() {
 		try {
@@ -216,10 +220,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	cameraSelect.addEventListener('change', () => {
-		const selectedDeviceId = cameraSelect.value;
-		initCamera(selectedDeviceId);
-	});
+	// cameraSelect.addEventListener('change', () => {
+	// 	const selectedDeviceId = cameraSelect.value;
+	// 	initCamera(selectedDeviceId);
+	// });
 
 	// Switch camera
 	// document.getElementById('flipCameraBtn').addEventListener('click', () => {
