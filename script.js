@@ -17,10 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	clearBtn.disabled = true;
 	exportBtn.disabled = true;
 
-	function onCameraDropdownChange(value) {
-		initCamera(value);
-	}
-
 	// Check and request camera permissions
 	async function checkCameraPermissions() {
 		try {
@@ -234,3 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Initialize the camera on page load
 	initCamera();
 });
+
+function onCameraDropdownChange(value) {
+	initCamera(value);
+}
