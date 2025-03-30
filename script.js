@@ -2,19 +2,16 @@ document.addEventListener('DOMContentLoaded', function () {
 	// DOM Elements.
 	const cameraElement = document.getElementById('camera');
 	const captureCanvas = document.getElementById('captureCanvas');
-	const adjustCanvas = document.getElementById('adjustCanvas'); // New canvas for adjustments
 	const captureBtn = document.getElementById('captureBtn');
-	const flipCameraBtn = document.getElementById('flipCameraBtn');
 	const galleryElement = document.getElementById('gallery');
 	const clearBtn = document.getElementById('clearBtn');
 	const exportBtn = document.getElementById('exportBtn');
+	const cameraSelect = document.getElementById('cameraSelect');
 
 	// Global variables
 	let stream = null;
-	let facingMode = 'environment'; // Start with the back camera
 	let capturedImages = [];
-	let isDetecting = false; // Flag to control detection
-	let currentCameraIndex = 0; // Track the currently selected camera
+	let videoDevices = [];
 
 	// Initially disable buttons
 	clearBtn.disabled = true;
@@ -23,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Check and request camera permissions
 	async function checkCameraPermissions() {
 		try {
-			// Request camera access
 			await navigator.mediaDevices.getUserMedia({ video: true });
 			return true; // Permissions granted
 		} catch (error) {
@@ -41,164 +37,52 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 
 		try {
+			// Get the list of available video devices
+			videoDevices = await navigator.mediaDevices.enumerateDevices();
+			const videoInputs = videoDevices.filter((device) => device.kind === 'videoinput');
+
+			if (videoInputs.length === 0) {
+				alert('No video input devices found.');
+				return;
+			}
+
+			// Populate the camera selection dropdown
+			cameraSelect.innerHTML = '';
+			videoInputs.forEach((device) => {
+				const option = document.createElement('option');
+				option.value = device.deviceId;
+				option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
+				cameraSelect.appendChild(option);
+			});
+
+			// Set constraints for the video stream
 			const constraints = {
 				video: {
 					deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-					width: { ideal: 1920 },
-					height: { ideal: 1080 },
+					width: { ideal: 1280 }, // Set ideal width
+					height: { ideal: 720 }, // Set ideal height
 				},
 			};
-
-			// Stop any existing stream
-			if (stream) {
-				stream.getTracks().forEach((track) => track.stop());
-			}
 
 			// Get the media stream
 			stream = await navigator.mediaDevices.getUserMedia(constraints);
 			cameraElement.srcObject = stream;
 
-			// Wait for the video metadata to load (ensures dimensions are available)
+			// Wait for the video metadata to load
 			await new Promise((resolve) => {
 				cameraElement.onloadedmetadata = () => {
 					cameraElement.play(); // Ensure playback starts
 					resolve();
 				};
 			});
-
-			// Set canvas dimensions
-			const videoTracks = stream.getVideoTracks();
-			if (videoTracks.length > 0) {
-				const settings = videoTracks[0].getSettings();
-				captureCanvas.width = settings.width || cameraElement.videoWidth;
-				captureCanvas.height = settings.height || cameraElement.videoHeight;
-				captureBtn.disabled = false; // Enable capture button only when ready
-				startDetection(); // Start detection after everything is set
-			} else {
-				throw new Error('No video tracks available in the stream.');
-			}
 		} catch (error) {
 			console.error('Camera initialization error:', error);
 			alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
 		}
 	}
 
-	// Function to list available cameras
-	async function listCameras() {
-		const devices = await navigator.mediaDevices.enumerateDevices();
-		const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-
-		// Example: Populate a dropdown or UI element with available cameras
-		videoDevices.forEach((device) => {
-			console.log(`Camera: ${device.label} (ID: ${device.deviceId})`);
-			// You can create UI elements to allow user selection here
-		});
-
-		// Optionally, you can call initCamera with a specific deviceId
-		// initCamera(videoDevices[0].deviceId); // Automatically select the first camera
-	}
-
-	// Call this function to list cameras when the page loads
-	listCameras();
-
-	// Start detecting document outlines
-	function startDetection() {
-		isDetecting = true;
-		const detectFrame = () => {
-			if (!isDetecting || !stream || !cameraElement.videoWidth) {
-				return; // Exit if not detecting or video isn't ready
-			}
-
-			const context = captureCanvas.getContext('2d');
-			context.drawImage(cameraElement, 0, 0, captureCanvas.width, captureCanvas.height);
-			const src = cv.imread(captureCanvas);
-			const dst = new cv.Mat();
-
-			// Convert to grayscale and apply processing
-			cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
-			cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
-			cv.Canny(src, src, 75, 200);
-
-			// Find contours
-			const contours = new cv.MatVector();
-			const hierarchy = new cv.Mat();
-			cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
-			// Find the largest contour
-			let maxArea = 0;
-			let largestContour = null;
-			let largestContourIndex = -1;
-			for (let i = 0; i < contours.size(); i++) {
-				const area = cv.contourArea(contours.get(i));
-				if (area > maxArea) {
-					maxArea = area;
-					largestContour = contours.get(i);
-					largestContourIndex = i;
-				}
-			}
-
-			// Draw the detected outline
-			if (largestContour) {
-				const color = new cv.Scalar(0, 255, 0); // Green color for the outline
-
-				// Create a Mat from the canvas
-				const canvasMat = cv.imread(captureCanvas); // Read the canvas as a Mat
-				cv.drawContours(canvasMat, contours, largestContourIndex, color, 2);
-
-				// Show the result back on the canvas
-				cv.imshow(captureCanvas, canvasMat); // Display the updated Mat on the canvas
-				canvasMat.delete(); // Clean up the Mat to prevent memory leaks
-			} else {
-			}
-
-			// Clean up
-			src.delete();
-			dst.delete();
-			requestAnimationFrame(detectFrame);
-		};
-		detectFrame();
-	}
-
-	// Stop detection
-	function stopDetection() {
-		isDetecting = false;
-	}
-
-	// Flip camera (switch between available cameras)
-	flipCameraBtn.addEventListener('click', async () => {
-		stopDetection();
-
-		// Get the list of available cameras
-		const videoDevices = await navigator.mediaDevices.enumerateDevices();
-		const availableCameras = videoDevices.filter((device) => device.kind === 'videoinput');
-
-		// Increment the index to switch to the next camera
-		currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
-
-		// Get the deviceId of the selected camera
-		const selectedDeviceId = availableCameras[currentCameraIndex].deviceId;
-
-		initCamera(selectedDeviceId); // Initialize the camera with the selected deviceId
-	});
-
 	// Capture image
 	captureBtn.addEventListener('click', () => {
-		// Get the document frame element
-		const documentFrame = document.querySelector('.document-frame');
-
-		// Flash effect
-		cameraFlash.classList.add('flash-animation');
-
-		// Change border to green
-		documentFrame.classList.add('captured');
-
-		// Remove animation class and green border after 1 second
-		setTimeout(() => {
-			cameraFlash.classList.remove('flash-animation');
-			documentFrame.classList.remove('captured');
-		}, 1000);
-
-		// Set canvas dimensions to match current video dimensions
 		const width = cameraElement.videoWidth;
 		const height = cameraElement.videoHeight;
 		captureCanvas.width = width;
@@ -207,86 +91,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		const context = captureCanvas.getContext('2d');
 		context.drawImage(cameraElement, 0, 0, width, height);
 
-		const src = cv.imread(captureCanvas);
-		const dst = new cv.Mat();
+		const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+		capturedImages.push(imageData);
+		updateGallery();
 
-		cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY);
-		cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
-		cv.Canny(src, src, 75, 200);
-
-		const contours = new cv.MatVector();
-		const hierarchy = new cv.Mat();
-		cv.findContours(src, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
-		let maxArea = 0;
-		let largestContour = null;
-		for (let i = 0; i < contours.size(); i++) {
-			const area = cv.contourArea(contours.get(i));
-			if (area > maxArea) {
-				maxArea = area;
-				largestContour = contours.get(i);
-			}
-		}
-
-		if (largestContour) {
-			const epsilon = 0.02 * cv.arcLength(largestContour, true);
-			const approx = new cv.Mat();
-			cv.approxPolyDP(largestContour, approx, epsilon, true);
-
-			if (approx.rows === 4) {
-				const points = [];
-				for (let i = 0; i < 4; i++) {
-					points.push(new cv.Point(approx.data32S[i * 2], approx.data32S[i * 2 + 1]));
-				}
-
-				const rect = cv.boundingRect(approx);
-				const dstSize = new cv.Size(rect.width, rect.height);
-				const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
-					points[0].x,
-					points[0].y,
-					points[1].x,
-					points[1].y,
-					points[2].x,
-					points[2].y,
-					points[3].x,
-					points[3].y,
-				]);
-
-				const M = cv.getPerspectiveTransform(
-					dstPoints,
-					cv.matFromArray(4, 1, cv.CV_32FC2, [
-						0,
-						0,
-						dstSize.width,
-						0,
-						dstSize.width,
-						dstSize.height,
-						0,
-						dstSize.height,
-					]),
-				);
-				cv.warpPerspective(src, dst, M, dstSize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
-				cv.imshow(captureCanvas, dst);
-				const croppedImageData = captureCanvas.toDataURL('image/jpeg', 0.8);
-
-				// Add the captured image to the array
-				capturedImages.push(croppedImageData);
-				updateGallery();
-
-				// Enable buttons if needed
-				clearBtn.disabled = false;
-				exportBtn.disabled = false;
-			}
-			approx.delete();
-		}
-
-		src.delete();
-		dst.delete();
-		contours.delete();
-		hierarchy.delete();
-
-		startDetection();
+		// Enable buttons if needed
+		clearBtn.disabled = false;
+		exportBtn.disabled = false;
 	});
 
 	// Update gallery with captured images
@@ -404,4 +215,13 @@ document.addEventListener('DOMContentLoaded', function () {
 			document.body.removeChild(loadingOverlay);
 		}
 	});
+
+	// Switch camera
+	document.getElementById('flipCameraBtn').addEventListener('click', () => {
+		const selectedDeviceId = cameraSelect.value;
+		initCamera(selectedDeviceId);
+	});
+
+	// Initialize the camera on page load
+	initCamera();
 });
