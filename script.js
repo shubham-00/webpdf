@@ -137,11 +137,11 @@ document.addEventListener('DOMContentLoaded', function () {
 	// });
 
 	// Initialize the camera on page load
-	// initCamera();
+	initCamera();
 });
 
-function onCameraDropdownChange(value) {
-	initCamera(value);
+function onCameraDropdownChange(selectedDeviceId) {
+	chooseCamera(selectedDeviceId);
 }
 
 // Check and request camera permissions
@@ -156,9 +156,12 @@ async function checkCameraPermissions() {
 }
 
 // Initialize the camera
-async function initCamera(selectedDeviceId) {
+// Loop thru all the cameras and ass them into the select - dropdown list
+async function initCamera() {
 	const hasPermission = await checkCameraPermissions();
 	if (!hasPermission) {
+		// TODO: maybe ask for perission again
+
 		alert('Could not access the camera. Please check your permissions and try again.');
 		return;
 	}
@@ -181,31 +184,33 @@ async function initCamera(selectedDeviceId) {
 			option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
 			cameraSelect.appendChild(option);
 		});
-
-		// Set constraints for the video stream
-		const constraints = {
-			video: {
-				deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-				width: { ideal: 1280 }, // Set ideal width
-				height: { ideal: 720 }, // Set ideal height
-			},
-		};
-
-		// Get the media stream
-		stream = await navigator.mediaDevices.getUserMedia(constraints);
-		cameraElement.srcObject = stream;
-
-		// Wait for the video metadata to load
-		await new Promise((resolve) => {
-			cameraElement.onloadedmetadata = () => {
-				cameraElement.play(); // Ensure playback starts
-				resolve();
-			};
-		});
 	} catch (error) {
 		console.error('Camera initialization error:', error);
 		alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
 	}
+}
+
+async function chooseCamera(selectedDeviceId) {
+	// Set constraints for the video stream
+	const constraints = {
+		video: {
+			deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+			width: { ideal: 1280 }, // Set ideal width
+			height: { ideal: 720 }, // Set ideal height
+		},
+	};
+
+	// Get the media stream
+	stream = await navigator.mediaDevices.getUserMedia(constraints);
+	cameraElement.srcObject = stream;
+
+	// Wait for the video metadata to load
+	await new Promise((resolve) => {
+		cameraElement.onloadedmetadata = () => {
+			cameraElement.play(); // Ensure playback starts
+			resolve();
+		};
+	});
 }
 
 // Update gallery with captured images
