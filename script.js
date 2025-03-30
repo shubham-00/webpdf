@@ -131,6 +131,8 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function onCameraDropdownChange(selectedDeviceId) {
+	// close the current stream
+	stream = null;
 	console.log('onCameraDropdownChange', selectedDeviceId);
 	chooseCamera(selectedDeviceId);
 }
