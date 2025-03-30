@@ -181,6 +181,7 @@ async function initCamera() {
 }
 
 async function chooseCamera(selectedDeviceId) {
+	console.log(selectedDeviceId);
 	// Set constraints for the video stream
 	const constraints = {
 		video: {
@@ -193,6 +194,7 @@ async function chooseCamera(selectedDeviceId) {
 	// Get the media stream
 	stream = await navigator.mediaDevices.getUserMedia(constraints);
 	cameraElement.srcObject = stream;
+	cameraElement.play();
 
 	// Wait for the video metadata to load
 	await new Promise((resolve) => {
