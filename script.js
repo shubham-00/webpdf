@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// Initialize the camera
-	async function initCamera() {
+	async function initCamera(selectedDeviceId) {
 		const hasPermission = await checkCameraPermissions();
 		if (!hasPermission) {
 			alert('Could not access the camera. Please check your permissions and try again.');
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		try {
 			const constraints = {
 				video: {
-					facingMode: facingMode,
+					deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
 					width: { ideal: 1920 },
 					height: { ideal: 1080 },
 				},
@@ -81,6 +81,24 @@ document.addEventListener('DOMContentLoaded', function () {
 			alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
 		}
 	}
+
+	// Function to list available cameras
+	async function listCameras() {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const videoDevices = devices.filter((device) => device.kind === 'videoinput');
+
+		// Example: Populate a dropdown or UI element with available cameras
+		videoDevices.forEach((device) => {
+			console.log(`Camera: ${device.label} (ID: ${device.deviceId})`);
+			// You can create UI elements to allow user selection here
+		});
+
+		// Optionally, you can call initCamera with a specific deviceId
+		// initCamera(videoDevices[0].deviceId); // Automatically select the first camera
+	}
+
+	// Call this function to list cameras when the page loads
+	listCameras();
 
 	// Start detecting document outlines
 	function startDetection() {
@@ -129,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				// Show the result back on the canvas
 				cv.imshow(captureCanvas, canvasMat); // Display the updated Mat on the canvas
 				canvasMat.delete(); // Clean up the Mat to prevent memory leaks
+			} else {
 			}
 
 			// Clean up
