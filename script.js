@@ -133,8 +133,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function onCameraDropdownChange(selectedDeviceId) {
-	// close the current stream
-	stream = null;
+	// Stop the current stream's tracks if it exists
+	if (stream) {
+		stream.getTracks().forEach((track) => track.stop());
+	}
+
 	console.log('onCameraDropdownChange', selectedDeviceId);
 	// alert('onCameraDropdownChange', selectedDeviceId);
 	chooseCamera(selectedDeviceId);
@@ -180,6 +183,9 @@ async function initCamera() {
 			option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
 			cameraSelect.appendChild(option);
 		});
+
+		// Start with the first camera by default
+		chooseCamera(videoInputs[0].deviceId);
 	} catch (error) {
 		console.error('Camera initialization error:', error);
 		alert('Failed to initialize the camera. Please ensure permissions are granted and try again.');
@@ -210,6 +216,11 @@ async function chooseCamera(selectedDeviceId) {
 			resolve();
 		};
 	});
+
+	// Log the deviceId of the stream to verify
+	const videoTrack = stream.getVideoTracks()[0];
+	const settings = videoTrack.getSettings();
+	console.log('Stream using deviceId:', settings.deviceId);
 }
 
 // Update gallery with captured images
