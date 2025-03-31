@@ -136,7 +136,7 @@ function onCameraDropdownChange(selectedDeviceId) {
 	// close the current stream
 	stream = null;
 	console.log('onCameraDropdownChange', selectedDeviceId);
-	alert('onCameraDropdownChange', selectedDeviceId);
+	// alert('onCameraDropdownChange', selectedDeviceId);
 	chooseCamera(selectedDeviceId);
 }
 
@@ -187,7 +187,7 @@ async function initCamera() {
 }
 
 async function chooseCamera(selectedDeviceId) {
-	console.log(selectedDeviceId);
+	// console.log(selectedDeviceId);
 	alert(selectedDeviceId);
 	// Set constraints for the video stream
 	const constraints = {
