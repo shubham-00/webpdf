@@ -190,7 +190,8 @@ async function chooseCamera(selectedDeviceId) {
 	// Set constraints for the video stream
 	const constraints = {
 		video: {
-			deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+			// deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+			deviceId: selectedDeviceId,
 			// width: { ideal: 1280 }, // Set ideal width
 			// height: { ideal: 720 }, // Set ideal height
 		},
