@@ -136,6 +136,7 @@ function onCameraDropdownChange(selectedDeviceId) {
 	// close the current stream
 	stream = null;
 	console.log('onCameraDropdownChange', selectedDeviceId);
+	alert('onCameraDropdownChange', selectedDeviceId);
 	chooseCamera(selectedDeviceId);
 }
 
@@ -197,12 +198,8 @@ async function chooseCamera(selectedDeviceId) {
 		},
 	};
 
-	const constrains2 = {
-		video: true,
-	};
-
 	// Get the media stream
-	stream = await navigator.mediaDevices.getUserMedia(constrains2);
+	stream = await navigator.mediaDevices.getUserMedia(constraints);
 	cameraElement.srcObject = stream;
 	cameraElement.play();
 
