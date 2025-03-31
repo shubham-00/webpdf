@@ -192,7 +192,7 @@ async function initCamera() {
 
 async function chooseCamera(selectedDeviceId) {
 	// console.log(selectedDeviceId);
-	alert(selectedDeviceId);
+	// alert(selectedDeviceId);
 	// Set constraints for the video stream
 	const constraints = {
 		video: {
