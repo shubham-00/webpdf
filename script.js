@@ -201,7 +201,7 @@ async function chooseCamera(selectedDeviceId) {
 	// Get the media stream
 	stream = await navigator.mediaDevices.getUserMedia(constraints);
 	cameraElement.srcObject = stream;
-	cameraElement.play();
+	// cameraElement.play();
 
 	// Wait for the video metadata to load
 	await new Promise((resolve) => {
