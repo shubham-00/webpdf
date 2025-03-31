@@ -191,14 +191,17 @@ async function chooseCamera(selectedDeviceId) {
 	const constraints = {
 		video: {
 			deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
-			// deviceId: { exact: selectedDeviceId },
 			// width: { ideal: 1280 }, // Set ideal width
 			// height: { ideal: 720 }, // Set ideal height
 		},
 	};
 
+	const constrains2 = {
+		video: true,
+	};
+
 	// Get the media stream
-	stream = await navigator.mediaDevices.getUserMedia(constraints);
+	stream = await navigator.mediaDevices.getUserMedia(constraints2);
 	cameraElement.srcObject = stream;
 	cameraElement.play();
 
