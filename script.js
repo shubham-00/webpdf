@@ -1,5 +1,3 @@
-// Shubham Patel
-
 let cameraElement;
 let captureCanvas;
 let captureBtn;
